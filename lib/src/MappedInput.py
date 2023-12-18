@@ -1,7 +1,7 @@
 import numpy as np
-from C13_NEE_PART.lib.src.Fluxnet2022_Jake import Fluxnet2022_Jake
-from C13_NEE_PART.lib.converter.Settings import Verbosity
-from C13_NEE_PART.lib.converter.Settings import ProjectionScenario
+from lib.src.Fluxnet2022_Jake import Fluxnet2022_Jake
+from lib.converter.Settings import Verbosity
+from lib.converter.Settings import ProjectionScenario
 import pandas as pd
 import netCDF4
 

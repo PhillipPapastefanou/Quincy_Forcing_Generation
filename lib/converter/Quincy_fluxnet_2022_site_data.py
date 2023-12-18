@@ -1,12 +1,13 @@
 import numpy as np
 import netCDF4
-from C13_NEE_PART.lib.src import SoilGridsDatabase
-from C13_NEE_PART.lib.src.Fluxnet2022_Jake import Fluxnet2022_Jake
-from C13_NEE_PART.lib.converter import Settings
-from C13_NEE_PART.lib.converter.Quincy_fluxnet_2022_forcing import Quincy_Fluxnet_2022_Forcing
-from C13_NEE_PART.lib.src import Quincy_Orchidee_PFT
-from C13_NEE_PART.lib.src import Quincy_Orchidee_PFT_List
-from C13_NEE_PART.lib.converter.Settings import Verbosity
+from lib.src.MappedInput import SoilGridsDatabase
+from lib.src.Fluxnet2022_Jake import Fluxnet2022_Jake
+from lib.src.PFT import Quincy_Orchidee_PFT
+from lib.src.PFT import Quincy_Orchidee_PFT_List
+from lib.converter import Settings
+from lib.converter.Quincy_fluxnet_2022_forcing import Quincy_Fluxnet_2022_Forcing
+
+from lib.converter.Settings import Verbosity
 
 
 class Quincy_Site_Data:

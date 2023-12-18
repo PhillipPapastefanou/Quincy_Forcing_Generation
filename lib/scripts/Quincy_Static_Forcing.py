@@ -1,54 +1,56 @@
-import sys
-import os
+from lib.converter.Quincy_fluxnet_2022_site_data_factory import Quincy_Site_Data_Factory
+from lib.converter.Quincy_fluxnet_2022_forcing import Quincy_Fluxnet_2022_Forcing
 
-scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
-os.chdir(scriptPath)
-sys.path.append("../lib/converter")
+from lib.converter.Quincy_fluxnet_2022_site_data import Quincy_Site_Data
+from lib.converter.Base_Parsing import Base_Parsing
+from lib.converter.Settings import Settings
+from lib.src.Fluxnet2022_Jake import Fluxnet2022_Jake
 
 
-from converter.Settings import Settings
-from converter.Settings import Verbosity
-from converter.Settings import ProjectionScenario
 
-from converter.Quincy_fluxnet_2022_site_data_factory import Quincy_Site_Data_Factory
-from converter.Quincy_fluxnet_2022_forcing import Quincy_Fluxnet_2022_Forcing
-from converter.Quincy_fluxnet_2022_site_data import Quincy_Site_Data
+class Quincy_Static_Forcing(Base_Parsing):
 
-from src.Fluxnet2022_Jake import Fluxnet2022_Jake
+    def __init__(self, settings: Settings, root_fluxnet_path, sites):
 
-set = Settings()
-set.co2_concentration_file = '/Users/pp/data/co2/GCP2023_co2_global.dat'
-set.co2_dC13_file = '/Users/pp/data/co2/delta13C_in_air_input4MIPs_GM_1850-2021_extrapolated.txt'
-set.co2_DC14_file = '/Users/pp/data/co2/Delta14C_in_air_input4MIPs_SHTRNH_1850-2021_extrapolated.txt'
+        Base_Parsing.__init__(self, settings = settings)
+        self.root_fluxnet_path = root_fluxnet_path
+        self.sites = sites
 
-set.root_ndep_path = "/Volumes/BSI/data/OCN/input/gridded/NDEP/CESM-CAM"
-set.ndep_projection_scenario = ProjectionScenario.RCP585
-set.root_pdep_path ="/Volumes/BSI/work/quincy/model/InputDataSources/P-DEP"
 
-set.soil_grid_database_path = "/Volumes/BSI/data/datastructure_bgi_cpy/grid/Global/0d10_static/soilgrids/v0_5_1/Data"
-set.verbosity = Verbosity.Info
-set.root_output_path = "/Users/pp/data/temp"
+    def parse(self):
 
-root_flux_path = "/Users/pp/data/jake_quincy_forcing"
+        quincy_site_data_factory = Quincy_Site_Data_Factory(settings=self.settings)
+        for site in self.sites:
 
-quincy_site_data_factory = Quincy_Site_Data_Factory(settings= set)
+            try:
+                print(f"Parsing site: {site}...")
+                print(f"Opening fluxnet site")
+                fnet = Fluxnet2022_Jake(rtpath = self.root_fluxnet_path, sitename = site)
 
-site_name = "At-Neu"
+                self.dprint("Parsing Fluxnet time variable.. ", fnet.Read_And_Parse_Time)
+                print("Creating Quincy fluxnet file:")
+                qf = Quincy_Fluxnet_2022_Forcing(settings=self.settings)
+                qf.Connect_to_fluxnet(fnet=fnet)
+                qf.Parse_forcing()
+                qf.Export()
 
-fnet = Fluxnet2022_Jake(rtpath = root_flux_path, sitename = site_name)
-fnet.Read_And_Parse_Time()
 
-qf = Quincy_Fluxnet_2022_Forcing(settings = set)
-qf.Connect_to_fluxnet(fnet = fnet)
-qf.Parse_forcing()
-qf.Export()
+                print("Reading Quincy site data")
+                qsd = Quincy_Site_Data(fluxnet_file=fnet, settings=self.settings)
+                qsd.Parse_Environmental_Data()
+                qsd.Parse_PFT_Fractions(qf=qf)
 
-qsd = Quincy_Site_Data(fluxnet_file= fnet, settings=set)
-qsd.Parse_Environmental_Data()
-qsd.Parse_PFT_Fractions(qf = qf)
+                quincy_site_data_factory.Add_site(qsd=qsd)
 
-quincy_site_data_factory.Add_site(qsd = qsd)
-quincy_site_data_factory.Export()
+            except:
+                print(f"ERROR parsing site {site}.")
+
+
+        quincy_site_data_factory.Export()
+
+
+
+
 
 
 

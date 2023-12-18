@@ -1,4 +1,3 @@
-
 class SW_Input_Parser:
     def __init__(self, file_unit):
 

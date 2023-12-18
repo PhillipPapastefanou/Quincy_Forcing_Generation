@@ -1,10 +1,10 @@
 import pandas as pd
 import numpy  as np
 
-from C13_NEE_PART.lib.converter.Settings import Settings
-from C13_NEE_PART.lib.converter.Base_Parsing import Base_Parsing
-from C13_NEE_PART.lib.converter.Quincy_fluxnet_2022_site_data import Quincy_Site_Data
-from C13_NEE_PART.lib.src import Quincy_Orchidee_PFT
+from lib.converter.Settings import Settings
+from lib.converter.Base_Parsing import Base_Parsing
+from lib.converter.Quincy_fluxnet_2022_site_data import Quincy_Site_Data
+from lib.src.PFT import Quincy_Orchidee_PFT
 
 
 

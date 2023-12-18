@@ -1,7 +1,7 @@
 import numpy as np
 from time import perf_counter
-from C13_NEE_PART.lib.converter.Settings import Verbosity
-from C13_NEE_PART.lib.converter.Settings import Settings
+from lib.converter.Settings import Verbosity
+from lib.converter.Settings import Settings
 
 
 class Base_Parsing:

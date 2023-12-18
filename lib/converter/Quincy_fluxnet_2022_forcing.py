@@ -1,19 +1,19 @@
 import pandas as pd
 
-from C13_NEE_PART.lib.src.Fluxnet2022_Jake import Fluxnet2022_Jake
-from C13_NEE_PART.lib.converter.Model_Forcing_Input import SW_Input_Parser
-from C13_NEE_PART.lib.converter.Model_Forcing_Input import LW_Input_Parser
-from C13_NEE_PART.lib.converter.Model_Forcing_Input import Tair_Input_Parser
-from C13_NEE_PART.lib.converter.Model_Forcing_Input import Precipitation_Input_Parser
-from C13_NEE_PART.lib.converter.Model_Forcing_Input import Qair_Input_Parser
-from C13_NEE_PART.lib.converter.Model_Forcing_Input import Pressure_Input_Parser
-from C13_NEE_PART.lib.converter.Model_Forcing_Input import Windspeed_Input_Parser
+from lib.src.Fluxnet2022_Jake import Fluxnet2022_Jake
+from lib.converter.Model_Forcing_Input import SW_Input_Parser
+from lib.converter.Model_Forcing_Input import LW_Input_Parser
+from lib.converter.Model_Forcing_Input import Tair_Input_Parser
+from lib.converter.Model_Forcing_Input import Precipitation_Input_Parser
+from lib.converter.Model_Forcing_Input import Qair_Input_Parser
+from lib.converter.Model_Forcing_Input import Pressure_Input_Parser
+from lib.converter.Model_Forcing_Input import Windspeed_Input_Parser
 
-from C13_NEE_PART.lib.src import NdepositionForcing
-from C13_NEE_PART.lib.src import PdepositionForcing
+from lib.src.MappedInput import NdepositionForcing
+from lib.src.MappedInput import PdepositionForcing
 
-from C13_NEE_PART.lib.converter.Settings import Settings
-from C13_NEE_PART.lib.converter.Base_Parsing import Base_Parsing
+from lib.converter.Settings import Settings
+from lib.converter.Base_Parsing import Base_Parsing
 
 class Quincy_Fluxnet_2022_Forcing(Base_Parsing):
     def __init__(self, settings: Settings):
