@@ -9,8 +9,8 @@ from lib.converter.Model_Forcing_Input import Qair_Input_Parser
 from lib.converter.Model_Forcing_Input import Pressure_Input_Parser
 from lib.converter.Model_Forcing_Input import Windspeed_Input_Parser
 
-from lib.src.MappedInput import NdepositionForcing
-from lib.src.MappedInput import PdepositionForcing
+from lib.src.GriddedInput import NdepositionForcing
+from lib.src.GriddedInput import PdepositionForcing
 
 from lib.converter.Settings import Settings
 from lib.converter.Base_Parsing import Base_Parsing
@@ -103,6 +103,10 @@ class Quincy_Fluxnet_2022_Forcing(Base_Parsing):
         # Sofar we have no snow input
         self.DataFrame['snow'] = 0.0
         self.DataFrame['wind_air'] = ws_parser.convert(fnet.df['Wind'])
+
+        # Removing too low wind values to avoid model instabilities
+        self.DataFrame.loc[self.DataFrame['wind_air'] < 0.1, 'wind_air'] = 0.1
+
 
     def _parse_dC13_and_DC14(self):
         df_co2_dC13 = pd.read_csv(self.settings.co2_dC13_file,

@@ -22,8 +22,11 @@ class Settings:
         self.co2_DC14_file = ""
 
         self.soil_grid_database_path = ""
+        self.phosphorus_input_path = ""
+        self.qmax_file = ""
         self.verbosity = Verbosity.Info
 
         self.root_output_path = ""
+        self.lithology_map_path = ""
 
 

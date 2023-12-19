@@ -9,7 +9,7 @@ sys.path.append("../lib")
 from lib.converter.Settings import Settings
 from lib.converter.Settings import Verbosity
 from lib.converter.Settings import ProjectionScenario
-from lib.scripts.Quincy_Static_Forcing import Quincy_Static_Forcing
+from lib.scripts.Quincy_Fluxnet22_Static_Forcing import Quincy_Fluxnet22_Static_Forcing
 
 set = Settings()
 set.co2_concentration_file = '/Users/pp/data/co2/GCP2023_co2_global.dat'
@@ -20,15 +20,18 @@ set.root_ndep_path = "/Volumes/BSI/data/OCN/input/gridded/NDEP/CESM-CAM"
 set.ndep_projection_scenario = ProjectionScenario.RCP585
 set.root_pdep_path ="/Volumes/BSI/work/quincy/model/InputDataSources/P-DEP"
 
+set.phosphorus_input_path = "/Volumes/BSI/data/datastructure_bgi_cpy/grid/Global/0d50_static/Phosphorous/v2014_06/Data"
 set.soil_grid_database_path = "/Volumes/BSI/data/datastructure_bgi_cpy/grid/Global/0d10_static/soilgrids/v0_5_1/Data"
+set.lithology_map_path = "/Volumes/BSI/data/datastructure_bgi_cpy/grid/Global/0d50_static/GLiM/v1_0/Data/GLim.720.360.nc"
 set.verbosity = Verbosity.Info
 set.root_output_path = "/Users/pp/data/temp"
+set.qmax_file = "/Users/pp/data/co2/qmax_org_values_per_nwrb_category_20180515.csv"
 
 root_flux_path = "/Users/pp/data/jake_quincy_forcing"
 sites = ["AT-Neu", "DE-Hai", "BR-Sa3", "FR-Pue", "US-Var"]
 sites = ["AT-Neu"]
 
-static_forcing =  Quincy_Static_Forcing(settings = set,
-                                        root_fluxnet_path = root_flux_path,
-                                        sites= sites)
+static_forcing =  Quincy_Fluxnet22_Static_Forcing(settings = set,
+                                                  root_fluxnet_path = root_flux_path,
+                                                  sites= sites)
 static_forcing.parse()

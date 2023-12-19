@@ -1,6 +1,7 @@
-import numpy as np
+import numpy  as np
+import pandas as pd
 import netCDF4
-from lib.src.MappedInput import SoilGridsDatabase
+
 from lib.src.Fluxnet2022_Jake import Fluxnet2022_Jake
 from lib.src.PFT import Quincy_Orchidee_PFT
 from lib.src.PFT import Quincy_Orchidee_PFT_List
@@ -8,7 +9,9 @@ from lib.converter import Settings
 from lib.converter.Quincy_fluxnet_2022_forcing import Quincy_Fluxnet_2022_Forcing
 
 from lib.converter.Settings import Verbosity
-
+from lib.src.GriddedInput import SoilGridsDatabase
+from lib.src.GriddedInput import LithologyMap
+from lib.src.GriddedInput import Phosphorus_Inputs
 
 class Quincy_Site_Data:
 
@@ -21,6 +24,7 @@ class Quincy_Site_Data:
         ds = netCDF4.Dataset(self.fnet.fname_path_meteo)
 
         # Longitude reference to account for solar inclination difference
+        # For now just se to the longitude coordinate
         self.Gmt_ref = self.fnet.Lon
 
         # Get clay fraction and convert from % to fraction
@@ -31,6 +35,9 @@ class Quincy_Site_Data:
 
         # Get sand fraction and convert from % to fraction
         self.Sand_fraction = ds['SNDPPT'][0,0] / 100.0
+
+        # Get bulk density
+        self.Bulk_density_sg = ds['BLDFIE'][0,0]
 
         # Saturated water content (volumetric fraction) for tS  [fraction]
         Fc_vol_sg = ds['AWCtS'][0, 0] / 100.0
@@ -48,6 +55,28 @@ class Quincy_Site_Data:
 
         self.AWC = (Fc_vol_sg - pwp_vol_sg) * depth_to_bedrock * 1000.0;
 
+        self.Taxousda = soil_grid_database.Taxousda
+        self.Taxnwrb = soil_grid_database.Taxnwrb
+
+        qmax_df = pd.read_csv(self.settings.qmax_file, delim_whitespace=True)
+        self.Q_max_org = qmax_df['qmax_org_value'].values[int(self.Taxnwrb)]
+
+
+        phosphorus_inputs = Phosphorus_Inputs(self.settings.phosphorus_input_path, self.settings.verbosity)
+        phosphorus_inputs.extract(fluxnet_file=self.fnet)
+        self.P_soil_depth = phosphorus_inputs.P_depth
+        self.P_soil_labile = phosphorus_inputs.P_labile_inorganic
+        self.P_soil_slow = phosphorus_inputs.P_slow
+        self.P_soil_occlud = phosphorus_inputs.P_occluded
+        self.P_soil_primary = phosphorus_inputs.P_primary
+
+
+        lithology_map = LithologyMap(self.settings.lithology_map_path, self.settings.verbosity)
+        lithology_map.extract(fluxnet_file=self.fnet)
+        self.Glim_class = lithology_map.Glim_class
+
+
+
         # Get soil PH from the data
         self.PH = ds['PHIHOX'][0,0] / 10.0
 
@@ -62,13 +91,20 @@ class Quincy_Site_Data:
 
         # Set Age to missing value
         self.Age = -9999
+        # Parsing plant year for now using standard values of 1500
+        self.Plant_year = self.Age
+        if self.Plant_year < 0:
+            self.Plant_year = 1500
+
 
         # Set BG ?? to missing value
         # Todo figure out what BG means
         self.BG = -9999
 
         # Copy IGBP str
-        self.PFT_biome_str = ds.pft
+        self.PFT_IGBP_str = ds.pft
+
+
 
         ds.close()
 
@@ -78,7 +114,7 @@ class Quincy_Site_Data:
 
         ds_rs.close()
 
-    def Parse_PFT_Fractions(self, qf : Quincy_Fluxnet_2022_Forcing):
+    def Parse_PFT(self, qf : Quincy_Fluxnet_2022_Forcing):
 
         KelvinToCelcius = 273.15
 
@@ -91,11 +127,33 @@ class Quincy_Site_Data:
         # Mulitply times 365 because rainfall is per day
         self.Rain_yearly_sum_avg = (df['rain'].groupby([df['date'].dt.year]).mean() * 365.0).mean()
 
-        self._parse_IGBP_string(IGBP_str        = self.PFT_biome_str,
+        self._parse_IGBP_string(IGBP_str        = self.PFT_IGBP_str,
                                 T_monthly_min   = self.Temp_monthly_avg_min,
                                 T_yearly_avg    = self.Temp_yearly_avg,
                                 P_yearly_sum    = self.Rain_yearly_sum_avg,
                                 )
+
+
+    def Perform_sanity_checks(self):
+        if np.isnan(self.Sand_fraction):
+            self.Sand_fraction = 0.4
+        if np.isnan(self.Silt_fraction):
+            self.Silt_fraction = 0.4
+        if np.isnan(self.Clay_fraction):
+            self.Clay_fraction = 1.0 - self.Sand_fraction - self.Silt_fraction
+        if np.isnan(self.PH):
+            self.PH = 6.0
+        if np.isnan(self.AWC):
+            self.AWC = 200.0
+        if np.isnan(self.Bulk_density_sg):
+            self.Bulk_density_sg = 1500.0
+        if np.isnan(self.Taxousda):
+            self.Taxousda = 30.0
+        if np.isnan(self.Taxnwrb):
+            self.Taxnwrb = 27.0
+        if np.isnan(self.Glim_class):
+            self.Glim_class = 27.0
+
 
     def _parse_IGBP_string(self, IGBP_str, T_monthly_min, T_yearly_avg, P_yearly_sum):
 
@@ -107,7 +165,7 @@ class Quincy_Site_Data:
 
         self.PFT_list = Quincy_Orchidee_PFT_List()
 
-        # Sönke's magic conversion formula for C3 or C4 grasses
+        # Sönke's magic conversion formula for C3 and C4 grasses
         frac_C4 = np.round(0.8 * (1.0 - np.exp(-((np.max([0.0, T_yearly_avg - 7.5])) / 10.0) ** 2.0)))
         frac_C3 = 1.0 - frac_C4
 
@@ -155,5 +213,19 @@ class Quincy_Site_Data:
             else:
                 self.PFT_list.Fractions[Quincy_Orchidee_PFT.BBS] = 1.0  # ???
 
+        # Sort the pfts according to their fractions
+        sorted_list = sorted(self.PFT_list.Fractions, key=self.PFT_list.Fractions.get)
+
+        # By default: list is sorted in ascending order and largest element is last
+        self.PFT_Quincy_str = sorted_list[-1].name
+
+
+        # Override exceptions
+        if self.fnet.sitename == "AU-Fog":
+            self.PFT_Quincy_str = Quincy_Orchidee_PFT.TeH.name
+        if self.fnet.sitename == "ZA-Kru":
+            self.PFT_Quincy_str = Quincy_Orchidee_PFT.TrBR.name
+        if self.fnet.sitename == "ZA-Kr2":
+            self.PFT_Quincy_str = Quincy_Orchidee_PFT.TrBR.name
 
 
