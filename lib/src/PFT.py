@@ -43,7 +43,7 @@ class IGPB_classifications:
         self.keys['EBF'] = "Evergreen Broadleaf Forests"
         self.keys['ENF'] = "Evergreen Needleleaf Forests"
         self.keys['GRA'] = "Grasslands"
-        self.keys['MF'] = "Mixed Forests"
+        self.keys['MF']  = "Mixed Forests"
         self.keys['OSH'] = "Open Shurblands"
         self.keys['SAV'] = "Savannas"
         self.keys['WET'] = "Permanent Wetlands"

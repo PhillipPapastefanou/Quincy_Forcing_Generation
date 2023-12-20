@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 
 from lib.src.Fluxnet2022_Jake import Fluxnet2022_Jake
 from lib.converter.Model_Forcing_Input import SW_Input_Parser
@@ -17,6 +18,9 @@ from lib.converter.Base_Parsing import Base_Parsing
 
 class Quincy_Fluxnet_2022_Forcing(Base_Parsing):
     def __init__(self, settings: Settings):
+
+        # Set random number generator seed
+        np.random.seed(42)
 
         Base_Parsing.__init__(self, settings = settings)
 
@@ -73,9 +77,13 @@ class Quincy_Fluxnet_2022_Forcing(Base_Parsing):
         # Testing for Nan
         self.dprint("Testing for missing values..", lambda: self._testing_for_nan())
 
-    def Export(self):
+    def Export_static_forcing(self):
         # Exporting QUINCY file
-        self.dprint("Exporting data.." ,  lambda:self._export())
+        self.dprint("Exporting static forcing data..", lambda:self._export_static())
+
+    def Export_transient_forcing(self):
+        # Exporting QUINCY file
+        self.dprint("Exporting transient forcing data..", lambda: self._generate_and_export_transient_forcing())
 
     def _parse_co2_forcing(self):
         # Parse main CO2
@@ -150,7 +158,7 @@ class Quincy_Fluxnet_2022_Forcing(Base_Parsing):
         self.DataFrame = pd.merge(self.DataFrame, n_dep_forcing.Data, on='year')
         self.DataFrame = self.DataFrame.rename(columns={'nhx': 'nhx_srf_down', 'noy': 'noy_srf_down'})
 
-    def _export(self):
+    def _export_static(self):
         df_export = self.DataFrame.copy()
 
         # Round values according to 4 significant figures
@@ -166,13 +174,61 @@ class Quincy_Fluxnet_2022_Forcing(Base_Parsing):
         df_export.index = df_export.index + 1
         df_export = df_export.sort_index()
 
-        # Export file acccording to QUINCY sta
+        # Export file acccording to QUINCY standards
         outSiteFile = f"{self.settings.root_output_path}/{self.fnet.sitename}_s_{self.fnet.Year_min}-{self.fnet.Year_max}.dat"
         df_export.to_csv(outSiteFile, header=True, sep=" ", index=None)
+
+    def _generate_and_export_transient_forcing(self):
+
+        df_fluxnet = self.DataFrame.copy()
+
+        year_min = self.fnet.Year_min
+        year_max = self.fnet.Year_max
+        year_f0 = self.settings.first_transient_forcing_year
+
+        years_to_be_sampled = np.arange(year_f0, year_min)
+
+        years_available = np.arange(year_min, year_max + 1)
+
+        # Create transient dataframe
+        df_transient = pd.DataFrame()
+
+        for year in years_to_be_sampled:
+
+            year_sampled = np.random.choice(years_available)
+
+            df_slice = df_fluxnet[df_fluxnet['year'] == year_sampled].copy()
+            df_slice['year'] = year
+
+            df_transient = pd.concat([df_transient, df_slice], ignore_index=True)
+            print(f"{year} sampled from {year_sampled}.")
+
+
+        # Add the org. fluxnet data add the end of the file
+        df_transient = pd.concat([df_transient, df_fluxnet], ignore_index=True)
+
+        # Round values according to 4 significant figures
+        for var in self.quincy_full_forcing_columns:
+            df_transient[var] = round(df_transient[var], 4)
+            df_transient[var] = df_transient[var].apply(pd.to_numeric, downcast='float').fillna(0)
+
+        # Make sure that columns are sorted according to QUINCY's needs
+        df_transient = df_transient[self.quincy_full_forcing_columns]
+
+        # Resetting index to avoid year scrable after sorting
+        df_transient.reset_index()
+
+        # Insert first unit row
+        df_transient.loc[-1] = self.quincy_unit_row
+        df_transient.index = df_transient.index + 1
+        df_transient = df_transient.sort_index()
+
+        # Export file acccording to QUINCY standards
+        outSiteFile = f"{self.settings.root_output_path}/{self.fnet.sitename}_t_{self.fnet.Year_min}-{self.fnet.Year_max}.dat"
+        df_transient.to_csv(outSiteFile, header=True, sep=" ", index=None)
 
 
     def _testing_for_nan(self):
         nan_rows = self.DataFrame[self.DataFrame.isna().any(axis=1)].shape[0]
         if nan_rows > 0:
-            print(f"Error: Found {nan_rows} rows with nan values. Skipping location...")
-            exit(99)
+            raise Exception(f"Error: Found {nan_rows} rows with nan values. Skipping location...")

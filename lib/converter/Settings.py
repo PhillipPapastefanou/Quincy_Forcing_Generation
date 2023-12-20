@@ -29,4 +29,6 @@ class Settings:
         self.root_output_path = ""
         self.lithology_map_path = ""
 
+        self.first_transient_forcing_year = 1901
+
 
