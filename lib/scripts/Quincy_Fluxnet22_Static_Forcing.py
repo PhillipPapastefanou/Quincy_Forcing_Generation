@@ -49,8 +49,9 @@ class Quincy_Fluxnet22_Static_Forcing(Base_Parsing):
                 print("")
                 print("")
 
-            except:
+            except Exception as e:
                 print(f"ERROR parsing site {site}.")
+                print(e)
 
 
         quincy_site_data_factory.Export()

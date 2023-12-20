@@ -4,7 +4,7 @@ import os
 scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
 os.chdir(scriptPath)
 # Put the path here
-sys.path.append("../lib")
+sys.path.append("../../")
 
 from lib.converter.Settings import Settings
 from lib.converter.Settings import Verbosity
