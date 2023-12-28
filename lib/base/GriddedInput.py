@@ -109,7 +109,6 @@ class PdepositionForcing(GriddedInput):
 
         lat_array = ds['lat'][:]
 
-
         lon_index = self.get_index(lon, lon_array)
         lat_index = self.get_index(lat, lat_array)
 

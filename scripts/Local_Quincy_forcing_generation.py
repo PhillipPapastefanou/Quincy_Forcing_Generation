@@ -4,12 +4,13 @@ import os
 scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
 os.chdir(scriptPath)
 # Put the path here
-sys.path.append("../lib")
+sys.path.append("..")
 
 from lib.converter.Settings import Settings
 from lib.converter.Settings import Verbosity
 from lib.converter.Settings import ProjectionScenario
 from lib.converter.Quincy_fluxnet22_parser import Quincy_Fluxnet22_Parser
+from lib.converter.Quincy_fluxnet22_parser_parallel import Quincy_Fluxnet22_Parser_Parallel
 
 set = Settings()
 set.co2_concentration_file = '/Users/pp/data/co2/GCP2023_co2_global.dat'
@@ -29,9 +30,22 @@ set.qmax_file = "/Users/pp/data/co2/qmax_org_values_per_nwrb_category_20180515.c
 
 root_flux_path = "/Users/pp/data/jake_quincy_forcing"
 sites = ["AT-Neu", "DE-Hai", "BR-Sa3", "FR-Pue", "US-Var"]
-sites = ["AT-Neu"]
 
-quincy_fluxnet22_forcing =  Quincy_Fluxnet22_Parser(settings = set,
+#sites = ["AT-Neu"]
+
+from mpi4py import MPI
+
+
+# Initialize MPI
+comm = MPI.COMM_WORLD
+rank = comm.Get_rank()
+size = comm.Get_size()
+
+quincy_fluxnet22_forcing =  Quincy_Fluxnet22_Parser_Parallel(settings = set,
                                           root_fluxnet_path = root_flux_path,
-                                          sites= sites)
+                                          sites= sites,
+                                        comm=comm, rank=rank, size=size)
+
+quincy_fluxnet22_forcing.send_parameter_indexes()
+
 quincy_fluxnet22_forcing.parse()
