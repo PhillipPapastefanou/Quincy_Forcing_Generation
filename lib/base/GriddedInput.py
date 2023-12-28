@@ -1,16 +1,17 @@
 import numpy as np
-from lib.src.Fluxnet2022_Jake import Fluxnet2022_Jake
-from lib.converter.Settings import Verbosity
-from lib.converter.Settings import ProjectionScenario
 import pandas as pd
 import netCDF4
 
+from lib.base.Fluxnet22_Jake import Fluxnet2022_Jake
+from lib.converter.Settings import Verbosity
+from lib.converter.Settings import ProjectionScenario
 
 
 class GriddedInput:
     def __init__(self, root_path, verbosity_level : Verbosity):
         self.root_path = root_path
         self.verbosity_level = verbosity_level
+        self.days_in_month = np.array([31,28,31,30,31,30,31,31,30,31,30,31])
 
     def get_index(self, coordinate_of_interest, available_coordinate_array):
         array = available_coordinate_array.copy()
@@ -47,9 +48,8 @@ class NdepositionForcing(GriddedInput):
         year_max = fluxnet_file.Year_max
 
         # Loop through years bug make sure that year max is included!
-        self.Data = pd.DataFrame(columns = ['year', 'nhx', 'noy'])
+        self.Data = pd.DataFrame(columns = ['year', 'doy', 'nhx', 'noy'])
 
-        index = 0
         for year in range(year_min, year_max + 1):
 
             # Use historic N deposition before 1996 only
@@ -64,17 +64,28 @@ class NdepositionForcing(GriddedInput):
             lon_index = self.get_index(lon, lon_array)
             lat_index = self.get_index(lat, lat_array)
 
-
             nhx_m = ds['NHx_deposition'][:, lat_index, lon_index] * 86400 * 1000 * 1000
             noy_m = ds['NOy_deposition'][:, lat_index, lon_index] * 86400 * 1000 * 1000
 
-            nhx = np.sum(nhx_m)
-            noy = np.sum(noy_m)
+            nhx_d = np.zeros(365)
+            noy_d = np.zeros(365)
 
-            new_row = pd.Series({"year": int(year),  "nhx": nhx, "noy": noy})
 
-            self.Data.loc[index] = new_row
-            index += 1
+            # SDitribute monthly means as daily values
+            imin = 0
+            for m in range(0, 12):
+                imax  = imin + self.days_in_month[m]
+                nhx_d[imin:imax] = nhx_m[m]
+                noy_d[imin:imax] = noy_m[m]
+                imin = imax
+
+            new_rows = pd.DataFrame({
+                                "year": (np.ones(365) * year).astype(int),
+                                "doy": (np.arange(0, 365) + 1).astype(int),
+                                "nhx": nhx_d,
+                                "noy": noy_d})
+
+            self.Data = pd.concat([self.Data, new_rows])
 
             ds.close()
 
@@ -102,7 +113,7 @@ class PdepositionForcing(GriddedInput):
         lon_index = self.get_index(lon, lon_array)
         lat_index = self.get_index(lat, lat_array)
 
-        self.p_dep = ds['pdep'][lat_index, lon_index]/365.0
+        self.p_dep = ds['pdep'][lat_index, lon_index] / 365.0
 
         ds.close()
 
@@ -127,7 +138,6 @@ class LithologyMap(GriddedInput):
         lat_index = self.get_index(lat, lat_array)
 
         self.Glim_class = ds['GLim'][lat_index, lon_index]
-
 
 class SoilGridsDatabase(GriddedInput):
 
@@ -177,7 +187,6 @@ class SW_Distribution(GriddedInput):
         coi = np.array([lon,lat])
 
         coords_avail = np.array([lon_array, lat_array])
-
 
         coords_diff = np.abs(coords_avail - coi[:,np.newaxis])
 
@@ -319,7 +328,6 @@ class Phosphorus_Inputs(GriddedInput):
             val = ds[var][lat_index_run, lon_index_run]
             if not np.isnan(val):
                 success = True
-
 
             offset +=1
 

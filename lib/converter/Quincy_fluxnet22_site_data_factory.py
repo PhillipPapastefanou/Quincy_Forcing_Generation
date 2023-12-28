@@ -2,14 +2,14 @@ import pandas as pd
 import numpy  as np
 
 from lib.converter.Settings import Settings
-from lib.converter.Base_Parsing import Base_Parsing
-from lib.converter.Quincy_fluxnet_2022_site_data import Quincy_Site_Data
-from lib.src.PFT import Quincy_Orchidee_PFT
+from lib.converter.Base_parsing import Base_Parsing
+from lib.converter.Quincy_fluxnet22_site_data import Quincy_Fluxnet22_Site_Data
+from lib.base.PFT import Quincy_Orchidee_PFT
 from datetime import date
 
 
 
-class Quincy_Site_Setup_Factory(Base_Parsing):
+class Quincy_Fluxnet22_Site_Data_Factory(Base_Parsing):
 
     def __init__(self, settings :Settings):
 
@@ -25,7 +25,7 @@ class Quincy_Site_Setup_Factory(Base_Parsing):
         self.df = pd.DataFrame(columns = self.columns)
 
 
-    def Add_site(self, qsd : Quincy_Site_Data):
+    def Add_site(self, qsd : Quincy_Fluxnet22_Site_Data):
 
         new_row = {'Site-ID': qsd.fnet.sitename,
                    'lon' : qsd.fnet.Lon,
@@ -72,11 +72,14 @@ class Quincy_Site_Setup_Factory(Base_Parsing):
             df_export[var] = self.round(df_export[var], 4)
             df_export[var] = df_export[var].apply(pd.to_numeric, downcast='float').fillna(0)
 
-        # Export file acccording to QUINCY standards
-        outSiteFile = f"{self.settings.root_output_path}/fluxnet_all_sites_1990-2022_list_{today}.dat"
-        df_export.to_csv(outSiteFile, header=True, sep=" ", index=None)
+        ymin = int(df_export['start'].min())
+        ymax = int(df_export['end'].max())
 
-        outSiteFile = f"{self.settings.root_output_path}/fluxnet_all_sites_1901-2022_list_{today}.dat"
+        # Export site list file (static version)
+        outSiteFile = f"{self.settings.root_output_path}/fluxnet_all_sites_{ymin}-{ymax}_list_{today}.dat"
+        df_export.to_csv(outSiteFile, header=True, sep=" ", index=None)
+        # Export site list file (transient version)
+        outSiteFile = f"{self.settings.root_output_path}/fluxnet_all_sites_{self.settings.first_transient_forcing_year}-{ymax}_list_{today}.dat"
         df_export.to_csv(outSiteFile, header=True, sep=" ", index=None)
 
 

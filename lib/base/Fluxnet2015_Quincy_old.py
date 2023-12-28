@@ -24,8 +24,7 @@ class Fluxnet2015_Quincy_old:
 
     def connect_to_remote(self, sftp):
         self.fname_path = sftp.open(self.fname_path)
-        print("Error")
-        exit(99)
+        raise Exception("Could not conenct to remote connection")
 
 
     def Read_variables(self, variables):

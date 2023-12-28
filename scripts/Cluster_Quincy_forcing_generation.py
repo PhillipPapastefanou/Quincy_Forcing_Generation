@@ -6,12 +6,12 @@ import pandas as pd
 scriptPath = os.path.realpath(os.path.dirname(sys.argv[0]))
 os.chdir(scriptPath)
 # Put the path here
-sys.path.append("../../")
+sys.path.append("..")
 
 from lib.converter.Settings import Settings
 from lib.converter.Settings import Verbosity
 from lib.converter.Settings import ProjectionScenario
-from lib.scripts.Quincy_Fluxnet22_Forcing import Quincy_Fluxnet22_Forcing
+from lib.converter.Quincy_fluxnet22_parser import Quincy_Fluxnet22_Parser
 
 set = Settings()
 set.co2_concentration_file = '/Net/Groups/BSI/people/ppapastefanou/climate_aux/co2/GCP2023_co2_global.dat'
@@ -28,18 +28,17 @@ set.phosphorus_input_path = "/Net/Groups/BSI/data/datastructure_bgi_cpy/grid/Glo
 set.qmax_file = "/Net/Groups/BSI/people/ppapastefanou/data/qmax_org_values_per_nwrb_category_20180515.csv"
 
 set.verbosity = Verbosity.Info
-set.root_output_path = "/Net/Groups/BSI/work_scratch/ppapastefanou/forcing_generation/2023"
+set.root_output_path = "/Net/Groups/BSI/work_scratch/ppapastefanou/FLUXNET_22"
 set.first_transient_forcing_year = 1901
-
 
 root_flux_path = "/Net/Groups/BGI/work_1/scratch/fluxcom/sitecube_proc/model_files_20231129"
 
 sites = pd.read_csv("Sitenames_and_PFTs.csv")['Sitename']
-sites = sites[1:2]
-#sites = ["AT-Neu", "DE-Hai", "BR-Sa3", "FR-Pue", "US-Var"]
+#sites = sites[1:4]
+#sites = ["AT-Neu"]
 
 
-static_forcing =  Quincy_Fluxnet22_Forcing(settings = set,
-                                           root_fluxnet_path = root_flux_path,
-                                           sites= sites)
-static_forcing.parse()
+quincy_fluxnet22_forcing = Quincy_Fluxnet22_Parser(settings = set,
+                                                    root_fluxnet_path = root_flux_path,
+                                                    sites = sites)
+quincy_fluxnet22_forcing.parse()

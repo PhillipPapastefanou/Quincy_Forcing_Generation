@@ -2,13 +2,13 @@ import pandas as pd
 import numpy  as np
 
 from lib.converter.Settings import Settings
-from lib.converter.Base_Parsing import Base_Parsing
-from lib.converter.Quincy_fluxnet_2022_site_data import Quincy_Site_Data
-from lib.src.PFT import Quincy_Orchidee_PFT
+from lib.converter.Base_parsing import Base_Parsing
+from lib.converter.Quincy_fluxnet22_site_data import Quincy_Fluxnet22_Site_Data
+from lib.base.PFT import Quincy_Orchidee_PFT
 
 
 
-class Quincy_Site_Data_Factory(Base_Parsing):
+class Quincy_Fluxnet22_Site_Data_Prev_Factory(Base_Parsing):
 
     def __init__(self, settings :Settings):
 
@@ -28,7 +28,7 @@ class Quincy_Site_Data_Factory(Base_Parsing):
         self.df = pd.DataFrame(columns = self.columns)
 
 
-    def Add_site(self, qsd : Quincy_Site_Data):
+    def Add_site(self, qsd : Quincy_Fluxnet22_Site_Data):
 
         new_row = {'site_id': qsd.fnet.sitename,
                    'start': qsd.fnet.Year_min,

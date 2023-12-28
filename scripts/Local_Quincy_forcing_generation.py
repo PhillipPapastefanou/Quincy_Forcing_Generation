@@ -9,7 +9,7 @@ sys.path.append("../lib")
 from lib.converter.Settings import Settings
 from lib.converter.Settings import Verbosity
 from lib.converter.Settings import ProjectionScenario
-from lib.scripts.Quincy_Fluxnet22_Forcing import Quincy_Fluxnet22_Forcing
+from lib.converter.Quincy_fluxnet22_parser import Quincy_Fluxnet22_Parser
 
 set = Settings()
 set.co2_concentration_file = '/Users/pp/data/co2/GCP2023_co2_global.dat'
@@ -31,7 +31,7 @@ root_flux_path = "/Users/pp/data/jake_quincy_forcing"
 sites = ["AT-Neu", "DE-Hai", "BR-Sa3", "FR-Pue", "US-Var"]
 sites = ["AT-Neu"]
 
-static_forcing =  Quincy_Fluxnet22_Forcing(settings = set,
-                                           root_fluxnet_path = root_flux_path,
-                                           sites= sites)
-static_forcing.parse()
+quincy_fluxnet22_forcing =  Quincy_Fluxnet22_Parser(settings = set,
+                                          root_fluxnet_path = root_flux_path,
+                                          sites= sites)
+quincy_fluxnet22_forcing.parse()

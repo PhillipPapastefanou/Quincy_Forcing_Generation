@@ -27,8 +27,14 @@ class Settings:
         self.verbosity = Verbosity.Info
 
         self.root_output_path = ""
+        self.transient_forcing_folder_name = "transient"
+        self.static_forcing_folder_name = "static"
+        self.analysis_folder_name = "analysis"
         self.lithology_map_path = ""
 
         self.first_transient_forcing_year = 1901
+
+        # Fluxnet Variables according to jnelson naming conventions
+        self.fluxnet_forcing_columns = ['SWdown', 'LWdown', 'Tair', 'Precip', 'Qair', 'Psurf', 'Wind']
 
 

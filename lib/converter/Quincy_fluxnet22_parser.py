@@ -1,33 +1,48 @@
 import pandas as pd
 
-from lib.converter.Quincy_fluxnet_2022_site_data_factory import Quincy_Site_Data_Factory
-from lib.converter.Quincy_fluxnet_2022_site_setup_factory import Quincy_Site_Setup_Factory
-from lib.converter.Quincy_fluxnet_2022_forcing import Quincy_Fluxnet_2022_Forcing
+from lib.converter.Quincy_fluxnet22_site_data_prev_factory import Quincy_Fluxnet22_Site_Data_Prev_Factory
+from lib.converter.Quincy_fluxnet22_site_data_factory import Quincy_Fluxnet22_Site_Data_Factory
+from lib.converter.Quincy_fluxnet22_forcing import Quincy_Fluxnet22_Forcing
+from lib.converter.Quincy_fluxnet22_analysis import Quincy_Fluxnet22_Analysis
 
-from lib.converter.Quincy_fluxnet_2022_site_data import Quincy_Site_Data
-from lib.converter.Base_Parsing import Base_Parsing
+from lib.converter.Quincy_fluxnet22_site_data import Quincy_Fluxnet22_Site_Data
+from lib.converter.Base_parsing import Base_Parsing
 from lib.converter.Settings import Settings
-from lib.src.Fluxnet2022_Jake import Fluxnet2022_Jake
+from lib.base.Fluxnet22_Jake import Fluxnet2022_Jake
 
 import os
 
 
-class Quincy_Fluxnet22_Forcing(Base_Parsing):
+class Quincy_Fluxnet22_Parser(Base_Parsing):
 
     def __init__(self, settings: Settings, root_fluxnet_path, sites):
 
         Base_Parsing.__init__(self, settings = settings)
         self.root_fluxnet_path = root_fluxnet_path
         self.sites = sites
-
         self.df_error = pd.DataFrame(columns=["site", "message"])
+
+        rt_output_folder = self.settings.root_output_path
+        static_folder = f"{rt_output_folder}/{self.settings.static_forcing_folder_name}"
+        transient_folder = f"{rt_output_folder}/{self.settings.transient_forcing_folder_name}"
+        analysis_folder = f"{rt_output_folder}/{self.settings.analysis_folder_name}"
+
         # Check if directory exists and create otherwise
-        if not os.path.exists(self.settings.root_output_path):
-            os.mkdir(self.settings.root_output_path)
+        if not os.path.exists(rt_output_folder):
+            os.mkdir(rt_output_folder)
+
+        if not os.path.exists(analysis_folder):
+            os.mkdir(analysis_folder)
+
+        # Do the same for static and transient forcing
+        if not os.path.exists(static_folder):
+            os.mkdir(static_folder)
+        if not os.path.exists(transient_folder):
+            os.mkdir(transient_folder)
 
     def parse(self):
-        quincy_site_data_factory = Quincy_Site_Data_Factory(settings=self.settings)
-        quincy_site_setup_factory = Quincy_Site_Setup_Factory(settings=self.settings)
+        quincy_site_data_factory = Quincy_Fluxnet22_Site_Data_Prev_Factory(settings=self.settings)
+        quincy_site_setup_factory = Quincy_Fluxnet22_Site_Data_Factory(settings=self.settings)
 
         n = len(self.sites)
         print(f"Parsing {n} fluxnet sites.")
@@ -40,10 +55,20 @@ class Quincy_Fluxnet22_Forcing(Base_Parsing):
                 print(f"Parsing site: {site} ({current_site} out of {n}).")
                 print(f"Opening fluxnet site")
                 fnet = Fluxnet2022_Jake(rtpath=self.root_fluxnet_path, sitename=site)
-                self.dprint("Parsing Fluxnet time variable.. ", fnet.Read_And_Parse_Time)
+                self.dprint("Parsing fluxnet time variable.. ", lambda: fnet.Read_And_Parse_Time())
+
+                # Reading variables from fluxnet site
+                self.dprint("Reading fluxnet forcing..",
+                            lambda: fnet.Read_forcing_variables(self.settings.fluxnet_forcing_columns))
+
+
+                analysis_fnet = Quincy_Fluxnet22_Analysis(settings=self.settings)
+                self.dprint("Analysing fluxnet output..", lambda: analysis_fnet._clalculate_plots(fnet) )
+
+
 
                 print("Creating Quincy fluxnet22 file:")
-                qf = Quincy_Fluxnet_2022_Forcing(settings=self.settings)
+                qf = Quincy_Fluxnet22_Forcing(settings=self.settings)
                 qf.Connect_to_fluxnet(fnet=fnet)
                 qf.Parse_forcing()
 
@@ -54,7 +79,7 @@ class Quincy_Fluxnet22_Forcing(Base_Parsing):
 
 
                 print("Reading Quincy site data")
-                qsd = Quincy_Site_Data(fluxnet_file=fnet, settings=self.settings)
+                qsd = Quincy_Fluxnet22_Site_Data(fluxnet_file=fnet, settings=self.settings)
                 qsd.Parse_Environmental_Data()
                 qsd.Parse_PFT(qf=qf)
                 qsd.Perform_sanity_checks()

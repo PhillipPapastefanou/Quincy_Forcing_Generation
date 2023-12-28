@@ -6,8 +6,7 @@ class SW_Input_Parser:
         if file_unit in self.target_units:
             dummy = 3
         else:
-            print(f"Unsupported LW unit: {file_unit}")
-            exit(99)
+            raise Exception("Unsupported SW radiation unit")
 
     def convert(self, data):
         return data
@@ -20,8 +19,7 @@ class LW_Input_Parser:
         if file_unit in self.target_units:
             dummy = 3
         else:
-            print(f"Unsupported LW unit: {file_unit}")
-            exit(99)
+            raise Exception("Unsupported LW radiation unit")
 
     def convert(self, data):
         return data
@@ -37,8 +35,7 @@ class Tair_Input_Parser:
         elif file_unit == "C":
             self.offset = self.DEGREE_C_TO_K
         else:
-            print("Unsupported temperature unit")
-            exit(99)
+            raise Exception("Unsupported temperature unit")
 
     def convert(self, data):
         return data + self.offset
@@ -55,8 +52,7 @@ class Qair_Input_Parser:
         elif file_unit in ['g/kg']:
             self.factor = 1.0
         else:
-            print("Unsupported specific humidity unit")
-            exit(99)
+            raise Exception("Unsupported QAir unit")
 
     def convert(self, data):
         return data * self.factor
@@ -73,8 +69,7 @@ class Pressure_Input_Parser:
         elif file_unit in ['hPa']:
             self.factor = 1.0
         else:
-            print("Unsupported pressure unit")
-            exit(99)
+            raise Exception("Unsupported pressure unit")
 
     def convert(self, data):
         return data * self.factor
@@ -89,8 +84,7 @@ class Precipitation_Input_Parser:
         elif file_unit in ['kg/m2/s']:
             self.factor = self.Seconds_In_Day
         else:
-            print("Unsupported rainfall unit")
-            exit(99)
+            raise Exception("Unsupported rainfall unit")
 
     def convert(self, data):
         return data * self.factor
@@ -105,8 +99,7 @@ class Windspeed_Input_Parser:
         elif file_unit in ['km/h', 'km h-1']:
             self.factor = 1.0 / self.KM_P_H_To_M_P_S
         else:
-            print("Unsupported windspeed unit")
-            exit(99)
+            raise Exception("Unsupported windseed unit")
 
     def convert(self, data):
         return data * self.factor

@@ -2,18 +2,18 @@ import numpy  as np
 import pandas as pd
 import netCDF4
 
-from lib.src.Fluxnet2022_Jake import Fluxnet2022_Jake
-from lib.src.PFT import Quincy_Orchidee_PFT
-from lib.src.PFT import Quincy_Orchidee_PFT_List
+from lib.base.Fluxnet22_Jake import Fluxnet2022_Jake
+from lib.base.PFT import Quincy_Orchidee_PFT
+from lib.base.PFT import Quincy_Orchidee_PFT_List
 from lib.converter import Settings
-from lib.converter.Quincy_fluxnet_2022_forcing import Quincy_Fluxnet_2022_Forcing
+from lib.converter.Quincy_fluxnet22_forcing import Quincy_Fluxnet22_Forcing
 
 from lib.converter.Settings import Verbosity
-from lib.src.GriddedInput import SoilGridsDatabase
-from lib.src.GriddedInput import LithologyMap
-from lib.src.GriddedInput import Phosphorus_Inputs
+from lib.base.GriddedInput import SoilGridsDatabase
+from lib.base.GriddedInput import LithologyMap
+from lib.base.GriddedInput import Phosphorus_Inputs
 
-class Quincy_Site_Data:
+class Quincy_Fluxnet22_Site_Data:
 
     def __init__(self, fluxnet_file :Fluxnet2022_Jake, settings : Settings):
         self.fnet = fluxnet_file
@@ -114,7 +114,7 @@ class Quincy_Site_Data:
 
         ds_rs.close()
 
-    def Parse_PFT(self, qf : Quincy_Fluxnet_2022_Forcing):
+    def Parse_PFT(self, qf : Quincy_Fluxnet22_Forcing):
 
         KelvinToCelcius = 273.15
 
