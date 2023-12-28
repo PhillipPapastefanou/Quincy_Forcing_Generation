@@ -23,6 +23,7 @@ class Quincy_Fluxnet22_Site_Data_Factory(Base_Parsing):
                       'Qmax_org_fp']
 
         self.df = pd.DataFrame(columns = self.columns)
+        self.rank = -1
 
 
     def Add_site(self, qsd : Quincy_Fluxnet22_Site_Data):
@@ -75,11 +76,21 @@ class Quincy_Fluxnet22_Site_Data_Factory(Base_Parsing):
         ymin = int(df_export['start'].min())
         ymax = int(df_export['end'].max())
 
-        # Export site list file (static version)
-        outSiteFile = f"{self.settings.root_output_path}/fluxnet_all_sites_{ymin}-{ymax}_list_{today}.dat"
-        df_export.to_csv(outSiteFile, header=True, sep=" ", index=None)
-        # Export site list file (transient version)
-        outSiteFile = f"{self.settings.root_output_path}/fluxnet_all_sites_{self.settings.first_transient_forcing_year}-{ymax}_list_{today}.dat"
-        df_export.to_csv(outSiteFile, header=True, sep=" ", index=None)
+        # Model does not run in parallel mode
+        if self.rank == -1:
+            # Export site list file (static version)
+            outSiteFile = f"{self.settings.root_output_path}/fluxnet_all_sites_{ymin}-{ymax}_list_{today}.dat"
+            df_export.to_csv(outSiteFile, header=True, sep=" ", index=None)
+            # Export site list file (transient version)
+            outSiteFile = f"{self.settings.root_output_path}/fluxnet_all_sites_{self.settings.first_transient_forcing_year}-{ymax}_list_{today}.dat"
+            df_export.to_csv(outSiteFile, header=True, sep=" ", index=None)
 
+            # Runs in parallel
+        else:
+            # Export site list file (static version)
+            outSiteFile = f"{self.settings.root_output_path}/fluxnet_all_sites_{ymin}-{ymax}_list_{today}.dat{self.rank}"
+            df_export.to_csv(outSiteFile, header=True, sep=" ", index=None)
+            # Export site list file (transient version)
+            outSiteFile = f"{self.settings.root_output_path}/fluxnet_all_sites_{self.settings.first_transient_forcing_year}-{ymax}_list_{today}.dat{self.rank}"
+            df_export.to_csv(outSiteFile, header=True, sep=" ", index=None)
 
