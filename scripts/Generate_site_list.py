@@ -5,8 +5,8 @@ import os
 
 files = glob.glob("/Net/Groups/BSI/work_scratch/ppapastefanou/fluxnet2022/*_meteo.nc")
 df = pd.DataFrame()
-
 list_pft = []
+
 sitenames = []
 
 files.sort()

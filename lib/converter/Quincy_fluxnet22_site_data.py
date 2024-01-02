@@ -148,11 +148,11 @@ class Quincy_Fluxnet22_Site_Data:
         if np.isnan(self.Bulk_density_sg):
             self.Bulk_density_sg = 1500.0
         if np.isnan(self.Taxousda):
-            self.Taxousda = 30.0
+            self.Taxousda = 30
         if np.isnan(self.Taxnwrb):
-            self.Taxnwrb = 27.0
+            self.Taxnwrb = 27
         if np.isnan(self.Glim_class):
-            self.Glim_class = 27.0
+            self.Glim_class = 2
 
 
     def _parse_IGBP_string(self, IGBP_str, T_monthly_min, T_yearly_avg, P_yearly_sum):
@@ -215,9 +215,11 @@ class Quincy_Fluxnet22_Site_Data:
 
         # Sort the pfts according to their fractions
         sorted_list = sorted(self.PFT_list.Fractions, key=self.PFT_list.Fractions.get)
-
         # By default: list is sorted in ascending order and largest element is last
-        self.PFT_Quincy_str = sorted_list[-1].name
+        self.PFT_Quincy_str = ''+sorted_list[-1].name
+
+        print(f"PFT: {self.PFT_Quincy_str}")
+
 
 
         # Override exceptions

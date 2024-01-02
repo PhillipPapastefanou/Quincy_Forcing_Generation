@@ -14,8 +14,6 @@ from lib.base.Fluxnet22_Jake import Fluxnet2022_Jake
 import os
 import mpi4py.MPI as MPI
 
-
-
 class Quincy_Fluxnet22_Parser_Parallel(Base_Parsing):
 
     def __init__(self, settings: Settings, root_fluxnet_path, sites,  comm, rank, size):
@@ -85,14 +83,13 @@ class Quincy_Fluxnet22_Parser_Parallel(Base_Parsing):
 
         # Overwriting file list with indicies
         self.sites = self.all_sites[self.recvbuf]
-        print(self.sites)
 
     def parse(self):
-        quincy_site_data_factory = Quincy_Fluxnet22_Site_Data_Prev_Factory(settings=self.settings)
-        quincy_site_setup_factory = Quincy_Fluxnet22_Site_Data_Factory(settings=self.settings)
+        quincy_site_data_prev_factory = Quincy_Fluxnet22_Site_Data_Prev_Factory(settings=self.settings)
+        quincy_site_data_factory = Quincy_Fluxnet22_Site_Data_Factory(settings=self.settings)
 
+        quincy_site_data_prev_factory.rank  = self.rank
         quincy_site_data_factory.rank  = self.rank
-        quincy_site_setup_factory.rank  = self.rank
 
         n = len(self.sites)
         print(f"Parsing {n} fluxnet sites.")
@@ -102,7 +99,7 @@ class Quincy_Fluxnet22_Parser_Parallel(Base_Parsing):
         for site in self.sites:
 
             try:
-                print(f"Parsing site: {site} ({current_site} out of {n}).")
+                print(f"Rank {self.rank} parsing site: {site} ({current_site} out of {n}).")
                 print(f"Opening fluxnet site")
                 fnet = Fluxnet2022_Jake(rtpath=self.root_fluxnet_path, sitename=site)
                 self.dprint("Parsing fluxnet time variable.. ", lambda: fnet.Read_And_Parse_Time())
@@ -113,8 +110,7 @@ class Quincy_Fluxnet22_Parser_Parallel(Base_Parsing):
 
 
                 analysis_fnet = Quincy_Fluxnet22_Analysis(settings=self.settings)
-                self.dprint("Analysing fluxnet output..", lambda: analysis_fnet._clalculate_plots(fnet) )
-
+                self.dprint("Analysing fluxnet output..", lambda: analysis_fnet._clalculate_plots(fnet))
 
 
                 print("Creating Quincy fluxnet22 file:")
@@ -123,10 +119,9 @@ class Quincy_Fluxnet22_Parser_Parallel(Base_Parsing):
                 qf.Parse_forcing()
 
                 # Generate transient forcing based on the input data
-                qf.Export_transient_forcing()
+                #qf.Export_transient_forcing()
                 # Generate static forcing based on the input data
-                qf.Export_static_forcing()
-
+                #qf.Export_static_forcing()
 
                 print("Reading Quincy site data")
                 qsd = Quincy_Fluxnet22_Site_Data(fluxnet_file=fnet, settings=self.settings)
@@ -134,9 +129,9 @@ class Quincy_Fluxnet22_Parser_Parallel(Base_Parsing):
                 qsd.Parse_PFT(qf=qf)
                 qsd.Perform_sanity_checks()
 
+                quincy_site_data_prev_factory.Add_site(qsd=qsd)
                 quincy_site_data_factory.Add_site(qsd=qsd)
-                quincy_site_setup_factory.Add_site(qsd=qsd)
-                print(f"Site {site} sucessfully parsed! ")
+                print(f"Site {site} sucessfully parsed!")
 
 
             except Exception as e:
@@ -152,14 +147,23 @@ class Quincy_Fluxnet22_Parser_Parallel(Base_Parsing):
             current_site += 1
 
         print("Exporting site information")
-        quincy_site_data_factory.Export()
-        quincy_site_setup_factory.Export()
+        quincy_site_data_prev_factory.size = self.size
+        quincy_site_data_prev_factory.Export()
+        quincy_site_data_factory.size = self.size
+        quincy_site_data_factory.Export(fnet = fnet)
 
-        if self.count == 1:
+        if self.size == 1:
             self.df_error.to_csv(f"{self.settings.root_output_path}/Errors.csv", index=False)
         else:
             self.df_error.to_csv(f"{self.settings.root_output_path}/Errors.csv{self.rank}", index=False)
 
+        # Wait until all processes are finished
+        self.comm.Barrier()
+        if self.is_root & (not self.size == 1):
+            self._aggregate_files(f"{self.settings.root_output_path}/Errors.csv")
+            self._aggregate_files(quincy_site_data_factory.Export_filename_static)
+            self._aggregate_files(quincy_site_data_factory.Export_filename_transient)
+            self._aggregate_files(quincy_site_data_prev_factory.Export_filename)
 
         print("Parsing complete")
 
@@ -167,7 +171,6 @@ class Quincy_Fluxnet22_Parser_Parallel(Base_Parsing):
     def _calculate_gridpoints(self):
 
         n = self.all_sites.shape[0]
-
         self.sendbuf = np.linspace(0, n - 1, num=n).astype('i')
 
         ave, res = divmod(self.sendbuf.size, self.size)
@@ -185,6 +188,16 @@ class Quincy_Fluxnet22_Parser_Parallel(Base_Parsing):
         self.displ = None
 
 
+    def _aggregate_files(self, fpath):
+        bpath = fpath
+        df = pd.read_csv(f"{bpath}{0}")
+        for i in range(1, self.size):
+            df_r = pd.read_csv(f"{bpath}{i}")
+            df = pd.concat([df, df_r])
+        df.to_csv(f"{bpath}", index=None)
+        #Remove old files
+        for i in range(0, self.size):
+            df_r = os.remove(f"{bpath}{i}")
 
 
 

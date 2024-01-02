@@ -63,9 +63,7 @@ class Quincy_Fluxnet22_Parser(Base_Parsing):
 
 
                 analysis_fnet = Quincy_Fluxnet22_Analysis(settings=self.settings)
-                self.dprint("Analysing fluxnet output..", lambda: analysis_fnet._clalculate_plots(fnet) )
-
-
+                self.dprint("Analysing fluxnet output..", lambda: analysis_fnet._clalculate_plots(fnet))
 
                 print("Creating Quincy fluxnet22 file:")
                 qf = Quincy_Fluxnet22_Forcing(settings=self.settings)
@@ -103,7 +101,7 @@ class Quincy_Fluxnet22_Parser(Base_Parsing):
 
         print("Exporting site information")
         quincy_site_data_factory.Export()
-        quincy_site_setup_factory.Export()
+        quincy_site_setup_factory.Export(fnet = fnet)
         self.df_error.to_csv(f"{self.settings.root_output_path}/Errors.csv", index=False)
         print("Parsing complete")
 

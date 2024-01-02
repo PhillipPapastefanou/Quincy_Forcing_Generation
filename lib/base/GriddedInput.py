@@ -151,53 +151,34 @@ class SoilGridsDatabase(GriddedInput):
         ds_taxousda = netCDF4.Dataset(f"{self.root_path}/TAXOUSDA_10km.soilgrid.3600.1800.nc")
         ds_taxnwrb = netCDF4.Dataset(f"{self.root_path}/TAXNWRB.soilgrid.3600.1800.nc")
 
-
+        # Todo: Optimize lon checks and coordinate extraction
         lon_array = ds_bedrock['longitude'][:]
-        # The lon array of the P deposition is in PM=360 which means it ranges from [0 to 360]
-        # Transform to [-180 to +180]
+        # Check if lon array is in PM=360 projection
         lon_array[lon_array > 180] -= 360
         lat_array = ds_bedrock['latitude'][:]
-
-
         lon_index = self.get_index(lon, lon_array)
         lat_index = self.get_index(lat, lat_array)
-
         self.Depth_to_Bedrock = ds_bedrock['BDRICM'][lat_index, lon_index] / 100.0
-        self.Taxousda = ds_taxousda['TAXOUSDA_10km'][lat_index, lon_index]
-        self.Taxnwrb = ds_taxnwrb['TAXNWRB'][lat_index, lon_index]
+
+        lon_array = ds_taxousda['longitude'][:]
+        # Check if lon array is in PM=360 projection
+        lon_array[lon_array > 180] -= 360
+        lat_array = ds_taxousda['latitude'][:]
+        lon_index = self.get_index(lon, lon_array)
+        lat_index = self.get_index(lat, lat_array)
+        self.Taxousda = int(ds_taxousda['TAXOUSDA_10km'][lat_index, lon_index])
+
+        lon_array = ds_taxnwrb['longitude'][:]
+        # Check if lon array is in PM=360 projection
+        lon_array[lon_array > 180] -= 360
+        lat_array = ds_taxnwrb['latitude'][:]
+        lon_index = self.get_index(lon, lon_array)
+        lat_index = self.get_index(lat, lat_array)
+        self.Taxnwrb = int(ds_taxnwrb['TAXNWRB'][lat_index, lon_index])
 
         ds_bedrock.close()
         ds_taxousda.close()
         ds_taxnwrb.close()
-
-class SW_Distribution(GriddedInput):
-
-    def __init__(self, root_path):
-        GriddedInput.__init__(self, root_path)
-
-
-    def extract(self, lon, lat):
-
-        ds = netCDF4.Dataset(f"{self.root_path}")
-
-        lon_array = ds['lon'][:]
-        lat_array = ds['lat'][:]
-
-        coi = np.array([lon,lat])
-
-        coords_avail = np.array([lon_array, lat_array])
-
-        coords_diff = np.abs(coords_avail - coi[:,np.newaxis])
-
-        mse = coords_diff[0,:]**2 + coords_diff[1,:]**2
-
-        min_index = np.argmin(mse)
-
-        print( coords_avail[:,min_index])
-
-        self.SW_Dataset = ds['insol'][min_index, :]
-
-        ds.close()
 
 class Phosphorus_Inputs(GriddedInput):
 

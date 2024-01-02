@@ -13,7 +13,6 @@ class Quincy_Fluxnet22_Analysis(Base_Parsing):
         Base_Parsing.__init__(self, settings = settings)
         self.analysis_folder = f"{self.settings.root_output_path}/{self.settings.analysis_folder_name}"
 
-
     def _clalculate_plots(self, fnet : Fluxnet2022_Jake):
 
         df = fnet.df.copy()

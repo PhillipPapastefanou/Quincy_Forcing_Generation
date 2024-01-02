@@ -5,6 +5,7 @@ from lib.converter.Settings import Settings
 from lib.converter.Base_parsing import Base_Parsing
 from lib.converter.Quincy_fluxnet22_site_data import Quincy_Fluxnet22_Site_Data
 from lib.base.PFT import Quincy_Orchidee_PFT
+from lib.base.Fluxnet22_Jake import Fluxnet2022_Jake
 from datetime import date
 
 
@@ -15,7 +16,7 @@ class Quincy_Fluxnet22_Site_Data_Factory(Base_Parsing):
 
         Base_Parsing.__init__(self, settings)
 
-        self.columns = ['Site-ID','lon','lat','PFT','start','end',
+        self.columns = ['Site-ID','lon','lat','pft','start','end',
                       'lon_gmt','clay','silt','sand','awc','bd','ph',
                       'taxusda','taxnwrb','lith_glim',
                       'LAI','Nleaf','SLA','Height','PlantYear',
@@ -42,7 +43,7 @@ class Quincy_Fluxnet22_Site_Data_Factory(Base_Parsing):
                    'bd' : qsd.Bulk_density_sg,
                    'ph': qsd.PH,
                    'taxusda': qsd.Taxousda,
-                   'taxwrb': qsd.Taxnwrb,
+                   'taxnwrb': qsd.Taxnwrb,
                    'lith_glim': qsd.Glim_class,
                    'LAI': qsd.LAI,
                    'Nleaf': qsd.Nleaf,
@@ -54,13 +55,13 @@ class Quincy_Fluxnet22_Site_Data_Factory(Base_Parsing):
                    'soilP_slow': qsd.P_soil_slow,
                    'soilP_occluded': qsd.P_soil_occlud,
                    'soilP_primary': qsd.P_soil_primary,
-                   'Qax_org_fp': qsd.Q_max_org
+                   'Qmax_org_fp': qsd.Q_max_org
                    }
 
         self.df.loc[len(self.df)] = new_row
 
 
-    def Export(self):
+    def Export(self, fnet: Fluxnet2022_Jake):
         # GEt todat date string
         today = date.today()
 
@@ -73,24 +74,29 @@ class Quincy_Fluxnet22_Site_Data_Factory(Base_Parsing):
             df_export[var] = self.round(df_export[var], 4)
             df_export[var] = df_export[var].apply(pd.to_numeric, downcast='float').fillna(0)
 
-        ymin = int(df_export['start'].min())
-        ymax = int(df_export['end'].max())
+        ymin = fnet.Year_min
+        ymax = fnet.Year_max
+
+
+
+        self.Export_filename_static = f"{self.settings.root_output_path}/fluxnet_all_sites_{ymin}-{ymax}_list_{today}.dat"
+        self.Export_filename_transient = f"{self.settings.root_output_path}/fluxnet_all_sites_{self.settings.first_transient_forcing_year}-{ymax}_list_{today}.dat"
 
         # Model does not run in parallel mode
-        if self.rank == -1:
+        if self.size == 1:
             # Export site list file (static version)
-            outSiteFile = f"{self.settings.root_output_path}/fluxnet_all_sites_{ymin}-{ymax}_list_{today}.dat"
-            df_export.to_csv(outSiteFile, header=True, sep=" ", index=None)
+            df_export.to_csv(self.Export_filename_static, header=True, sep=" ", index=None)
             # Export site list file (transient version)
-            outSiteFile = f"{self.settings.root_output_path}/fluxnet_all_sites_{self.settings.first_transient_forcing_year}-{ymax}_list_{today}.dat"
-            df_export.to_csv(outSiteFile, header=True, sep=" ", index=None)
+            # Overwrite starting year string
+            df_export['start'] = self.settings.first_transient_forcing_year
+            df_export.to_csv(self.Export_filename_transient, header=True, sep=" ", index=None)
 
-            # Runs in parallel
+        # Runs in parallel
         else:
             # Export site list file (static version)
-            outSiteFile = f"{self.settings.root_output_path}/fluxnet_all_sites_{ymin}-{ymax}_list_{today}.dat{self.rank}"
-            df_export.to_csv(outSiteFile, header=True, sep=" ", index=None)
+            df_export.to_csv(f"{self.Export_filename_static}{self.rank}", header=True, sep=" ", index=None)
             # Export site list file (transient version)
-            outSiteFile = f"{self.settings.root_output_path}/fluxnet_all_sites_{self.settings.first_transient_forcing_year}-{ymax}_list_{today}.dat{self.rank}"
-            df_export.to_csv(outSiteFile, header=True, sep=" ", index=None)
+            # Overwrite starting year string
+            df_export['start'] = self.settings.first_transient_forcing_year
+            df_export.to_csv(f"{self.Export_filename_transient}{self.rank}", header=True, sep=" ", index=None)
 

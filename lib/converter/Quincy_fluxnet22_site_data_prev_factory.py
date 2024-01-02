@@ -10,7 +10,7 @@ from lib.base.PFT import Quincy_Orchidee_PFT
 
 class Quincy_Fluxnet22_Site_Data_Prev_Factory(Base_Parsing):
 
-    def __init__(self, settings :Settings):
+    def __init__(self, settings : Settings):
 
         Base_Parsing.__init__(self, settings)
 
@@ -27,7 +27,7 @@ class Quincy_Fluxnet22_Site_Data_Prev_Factory(Base_Parsing):
 
         self.df = pd.DataFrame(columns = self.columns)
 
-        self.rank = -1
+        self.size = 1
 
 
     def Add_site(self, qsd : Quincy_Fluxnet22_Site_Data):
@@ -72,13 +72,13 @@ class Quincy_Fluxnet22_Site_Data_Prev_Factory(Base_Parsing):
             df_export[var] = self.round(df_export[var], 4)
             df_export[var] = df_export[var].apply(pd.to_numeric, downcast='float').fillna(0)
 
+        self.Export_filename = f"{self.settings.root_output_path}/generate_flxunet_2022_site_list.dat"
+
         # Export file acccording to QUINCY standards
-        if self.rank == -1:
-            outSiteFile = f"{self.settings.root_output_path}/generate_flxunet_2022_site_list.dat"
-            df_export.to_csv(outSiteFile, header=True, sep=" ", index=None)
+        if self.size == 1:
+            df_export.to_csv(self.Export_filename, header=True, sep=" ", index=None)
         else:
-            outSiteFile = f"{self.settings.root_output_path}/generate_flxunet_2022_site_list.dat{self.rank}"
-            df_export.to_csv(outSiteFile, header=True, sep=" ", index=None)
+            df_export.to_csv(f"{self.Export_filename}{self.rank}", header=True, sep=" ", index=None)
 
 
 
