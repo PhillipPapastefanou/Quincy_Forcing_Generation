@@ -1,6 +1,7 @@
 import numpy as np
 import pandas as pd
 import netCDF4
+import numbers
 
 from lib.base.Fluxnet22_Jake import Fluxnet2022_Jake
 from lib.converter.Settings import Verbosity
@@ -209,16 +210,16 @@ class Phosphorus_Inputs(GriddedInput):
         self.P_depth = 0.5
 
 
-        if np.isnan(self.P_labile_inorganic):
+        if self.P_labile_inorganic.mask.all():
             self.P_labile_inorganic = self.extend_search(ds_labiles, 'Labile_Inorganic_P')
 
-        if np.isnan(self.P_slow):
+        if self.P_slow.mask.all():
             self.P_slow = self.extend_search(ds_sec_mineral, 'Seconday_Mineral__P')
 
-        if np.isnan(self.P_occluded):
+        if self.P_occluded.mask.all():
             self.P_occluded = self.extend_search(ds_occluded, 'Occluded_P')
 
-        if np.isnan(self.P_primary):
+        if self.P_primary.mask.all():
             self.P_primary = self.extend_search(ds_apatite, 'Apatite_P')
 
 
@@ -237,77 +238,65 @@ class Phosphorus_Inputs(GriddedInput):
 
             lon_index_run = self.lon_index
             lat_index_run = self.lat_index - offset
-            if lat_index_run < 0 :
-                lat_index_run = 0
+            lat_index_run = lat_index_run % ds['latitude'].shape[0]
             val = ds[var][lat_index_run, lon_index_run]
-            if not np.isnan(val):
+            if not val.mask.all():
                 success = True
-                break
+
 
             lon_index_run = self.lon_index
             lat_index_run = self.lat_index +  offset
-            if lat_index_run < 0 :
-                lat_index_run = 0
+            lat_index_run = lat_index_run % ds['latitude'].shape[0]
             val = ds[var][lat_index_run, lon_index_run]
-            if not np.isnan(val):
+            if not val.mask.all():
                 success = True
-                break
 
             lon_index_run = self.lon_index - offset
             lat_index_run = self.lat_index
-            if lon_index_run < 0:
-                lon_index_run = 0
+            lon_index_run = lon_index_run % ds['longitude'].shape[0]
             val = ds[var][lat_index_run, lon_index_run]
-            if not np.isnan(val):
+            if not val.mask.all():
                 success = True
 
             lon_index_run = self.lon_index + offset
             lat_index_run = self.lat_index
-            if lon_index_run < 0:
-                lon_index_run = 0
+            lon_index_run = lon_index_run % ds['longitude'].shape[0]
             val = ds[var][lat_index_run, lon_index_run]
-            if not np.isnan(val):
+            if not val.mask.all():
                 success = True
 
             lon_index_run = self.lon_index - offset
             lat_index_run = self.lat_index - offset
-            if lon_index_run < 0:
-                lon_index_run = 0
-            if lat_index_run < 0 :
-                lat_index_run = 0
+            lat_index_run = lat_index_run % ds['latitude'].shape[0]
+            lon_index_run = lon_index_run % ds['longitude'].shape[0]
             val = ds[var][lat_index_run, lon_index_run]
-            if not np.isnan(val):
+            if not val.mask.all():
                 success = True
 
             lon_index_run = self.lon_index + offset
             lat_index_run = self.lat_index - offset
-            if lon_index_run < 0:
-                lon_index_run = 0
-            if lat_index_run < 0 :
-                lat_index_run = 0
+            lat_index_run = lat_index_run % ds['latitude'].shape[0]
+            lon_index_run = lon_index_run % ds['longitude'].shape[0]
             val = ds[var][lat_index_run, lon_index_run]
-            if not np.isnan(val):
+            if not val.mask.all():
                 success = True
 
             lon_index_run = self.lon_index - offset
             lat_index_run = self.lat_index + offset
-            if lon_index_run < 0:
-                lon_index_run = 0
-            if lat_index_run < 0 :
-                lat_index_run = 0
+            lat_index_run = lat_index_run % ds['latitude'].shape[0]
+            lon_index_run = lon_index_run % ds['longitude'].shape[0]
             val = ds[var][lat_index_run, lon_index_run]
-            if not np.isnan(val):
+            if not val.mask.all():
                 success = True
 
             lon_index_run = self.lon_index + offset
             lat_index_run = self.lat_index + offset
-            if lon_index_run < 0:
-                lon_index_run = 0
-            if lat_index_run < 0 :
-                lat_index_run = 0
+            lat_index_run = lat_index_run % ds['latitude'].shape[0]
+            lon_index_run = lon_index_run % ds['longitude'].shape[0]
             val = ds[var][lat_index_run, lon_index_run]
-            if not np.isnan(val):
+            if not val.mask.all():
                 success = True
+
 
             offset +=1
 

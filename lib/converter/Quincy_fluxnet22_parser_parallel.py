@@ -119,11 +119,11 @@ class Quincy_Fluxnet22_Parser_Parallel(Base_Parsing):
                 qf.Parse_forcing()
 
                 # Generate transient forcing based on the input data
-                #qf.Export_transient_forcing()
+                qf.Export_transient_forcing()
                 # Generate static forcing based on the input data
-                #qf.Export_static_forcing()
+                qf.Export_static_forcing()
 
-                print("Reading Quincy site data")
+                print("Reading Quincy site data information")
                 qsd = Quincy_Fluxnet22_Site_Data(fluxnet_file=fnet, settings=self.settings)
                 qsd.Parse_Environmental_Data()
                 qsd.Parse_PFT(qf=qf)

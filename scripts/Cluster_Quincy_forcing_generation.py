@@ -43,7 +43,7 @@ root_flux_path = "/Net/Groups/BSI/scratch/ppapastefanou/fluxnet/model_files_2023
 
 sites = pd.read_csv("Sitenames_and_PFTs.csv")['Sitename']
 #sites = sites[0:50]
-sites = ["CA-ARB"]
+sites = ["AT-Neu"]
 #sites = ["AT-Neu", "DE-Hai", "BR-Sa3", "FR-Pue", "US-Var"]
 
 
